@@ -2,166 +2,158 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
+  <!-- スマホでの表示に合わせてviewportを設定 -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>授受簿</title>
+  <title>授受簿サンプル</title>
   <style>
-    body {
-      font-family: sans-serif;
-    }
-
+    /* テーブルの簡易スタイル */
     table {
       width: 100%;
       border-collapse: collapse;
-      table-layout: fixed; /* セルの幅を均等にする */
+      margin-bottom: 1rem;
     }
-
     th, td {
-      border: 1px solid #ddd;
-      padding: 8px;
+      border: 1px solid #ccc;
+      padding: 0.5rem;
       text-align: center;
     }
-
     th {
-      background-color: #f2f2f2;
-      cursor: pointer; /* ヘッダーにカーソルを合わせたときにポインターにする */
+      cursor: pointer; /* ソート可能列のためカーソルをポインタに */
+      background-color: #f0f0f0;
     }
-
-    /* 担当者ステータス列 スタイル */
-    td:nth-child(3) input[type="date"] {
-        width: 130px; /* 入力欄を少し広めに */
+    /* PC画面用の簡易デザイン */
+    @media screen and (min-width: 768px) {
+      body {
+        margin: 2rem auto;
+        max-width: 800px;
+        font-size: 16px;
+      }
     }
-    /* 施工班ステータス列 スタイル */
-    td:nth-child(4) input[type="date"] {
-        width: 130px; /* 入力欄を少し広めに */
+    /* 完了行に付与されるクラス。まとめて非表示にする際に使用 */
+    .completed {
+      background-color: #d3d3d3; /* 完了行と分かるように色を変えておく（任意） */
     }
-
+    /* 非表示にするためのクラス */
     .hidden {
       display: none;
-    }
-
-    /* スマホ用のスタイル (iPhone SE3を想定) */
-    @media (max-width: 375px) {
-      table {
-        font-size: 14px; /* 文字サイズを少し小さく */
-      }
-      /* 担当者、施工班ステータス列をスマホ用に調整 */
-      td:nth-child(3) input[type="date"],
-      td:nth-child(4) input[type="date"] {
-          width: 95%; /* 入力欄を目一杯広げる */
-      }
     }
   </style>
 </head>
 <body>
+  <h1>授受簿サンプル</h1>
 
-  <h1>授受簿</h1>
+  <!-- 新規登録フォーム -->
+  <div>
+    <label for="futakuInput">付託番号：</label>
+    <input type="text" id="futakuInput" placeholder="例：12345">
+    
+    <label for="dateInput">ステータス移行月日：</label>
+    <input type="date" id="dateInput">
+    
+    <button onclick="addRow()">新規登録</button>
+  </div>
 
-  <button onclick="hideCompletedRows()">完了分を非表示</button>
+  <!-- 一括に非表示ボタン -->
+  <div style="margin-top: 1rem;">
+    <button onclick="hideCompletedRows()">一括に非表示</button>
+  </div>
 
-  <table>
+  <!-- テーブル -->
+  <table id="myTable">
     <thead>
       <tr>
         <th onclick="sortTable(0)">付託番号</th>
-        <th>担当者</th>
-        <th onclick="sortTable(2)">担当者ステータス移行月日</th>
-        <th onclick="sortTable(3)">施工班ステータス移行月日</th>
-        <th>担当者</th>
+        <th onclick="sortTable(1)">ステータス移行月日</th>
+        <th>完了</th>
       </tr>
     </thead>
-    <tbody id="data-body">
-      <tr>
-        <td><input type="text" class="f-num"></td>
-        <td><input type="checkbox" class="status-check" onchange="updateDate(this, 2)"></td>
-        <td><input type="date" class="date-input" ></td>
-        <td><input type="date" class="date-input"></td>
-        <td><input type="checkbox" class="status-check" onchange="updateDate(this, 4)"></td>
-      </tr>
+    <tbody>
+      <!-- 新規登録時、ここに行が追加される -->
     </tbody>
   </table>
 
-  <button onclick="addRow()">行を追加</button>
-
   <script>
-    let nextRowNum = 1; // 次の行番号
+    // テーブルソート機能
+    // colIndexに応じて、付託番号(文字列ソート)か日付ソートかを行う
+    function sortTable(colIndex) {
+      const table = document.getElementById("myTable");
+      const tbody = table.querySelector("tbody");
+      const rows = Array.from(tbody.rows);
 
-    // 行を追加する関数
-    function addRow() {
-      const tbody = document.getElementById('data-body');
-      const newRow = document.createElement('tr');
-      newRow.innerHTML = `
-        <td><input type="text" class="f-num"></td>
-        <td><input type="checkbox" class="status-check" onchange="updateDate(this, 2)"></td>
-        <td><input type="date" class="date-input"></td>
-        <td><input type="date" class="date-input"></td>
-        <td><input type="checkbox" class="status-check" onchange="updateDate(this, 4)"></td>
-      `;
-      tbody.appendChild(newRow);
-      nextRowNum++;
+      // ソートの種類を判定（0番目は文字列、1番目は日付想定）
+      let isDateSort = (colIndex === 1);
+
+      rows.sort((a, b) => {
+        const cellA = a.cells[colIndex].innerText;
+        const cellB = b.cells[colIndex].innerText;
+
+        if(isDateSort) {
+          // 日付をソート
+          // 空欄や不正な日付が入る場合は fallback
+          const dateA = new Date(cellA).getTime() || 0;
+          const dateB = new Date(cellB).getTime() || 0;
+          return dateA - dateB;
+        } else {
+          // 文字列ソート(付託番号)
+          return cellA.localeCompare(cellB, 'ja');
+        }
+      });
+
+      // ソート後の順序でtbodyに再度append
+      rows.forEach(row => tbody.appendChild(row));
     }
 
-    // チェックボックスが変更されたときに日付を更新する関数
-      function updateDate(checkbox, colIndex) {
-          const row = checkbox.closest('tr');
-          const dateInput = row.querySelectorAll('.date-input')[colIndex - 2];
+    // 新規行を追加する
+    function addRow() {
+      const futakuInput = document.getElementById("futakuInput");
+      const dateInput = document.getElementById("dateInput");
 
-          if (checkbox.checked) {
-              const today = new Date();
-              const formattedDate = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
-              dateInput.value = formattedDate;
-          } else {
-              dateInput.value = ''; // チェックが外れたら日付をクリア
-          }
+      const futakuVal = futakuInput.value.trim();
+      const dateVal = dateInput.value.trim();
+
+      if(!futakuVal || !dateVal) {
+        alert("付託番号とステータス移行月日を入力してください。");
+        return;
       }
 
-    // 完了した行を非表示にする関数
-       function hideCompletedRows() {
-      const rows = document.querySelectorAll('#data-body tr');
+      const table = document.getElementById("myTable").getElementsByTagName("tbody")[0];
+      const newRow = table.insertRow();
+
+      // 付託番号セル
+      const cellFutaku = newRow.insertCell();
+      cellFutaku.innerText = futakuVal;
+
+      // ステータス移行月日セル
+      const cellDate = newRow.insertCell();
+      cellDate.innerText = dateVal;
+
+      // 完了ボタンセル
+      const cellComplete = newRow.insertCell();
+      const completeBtn = document.createElement("button");
+      completeBtn.innerText = "完了";
+      completeBtn.addEventListener("click", () => {
+        // 完了クリック時は行にcompletedクラスを付与
+        newRow.classList.toggle("completed");
+      });
+      cellComplete.appendChild(completeBtn);
+
+      // 入力欄をクリア
+      futakuInput.value = "";
+      dateInput.value = "";
+    }
+
+    // 完了にした行を一括非表示にする
+    function hideCompletedRows() {
+      const table = document.getElementById("myTable");
+      const rows = table.querySelectorAll("tbody tr");
+
       rows.forEach(row => {
-        const checkboxes = row.querySelectorAll('.status-check');
-        //両方チェックされていたら非表示
-        if (checkboxes[0].checked && checkboxes[1].checked) {
-          row.classList.add('hidden');
+        if(row.classList.contains("completed")) {
+          // completedクラスのついた行は非表示にする
+          row.classList.add("hidden");
         }
       });
     }
-
-    // テーブルのソート機能
-      function sortTable(columnIndex) {
-          const tbody = document.getElementById('data-body');
-          const rows = Array.from(tbody.querySelectorAll('tr'));
-
-          const isDateColumn = [2, 3].includes(columnIndex); // 日付カラムかどうか
-
-          rows.sort((a, b) => {
-              const aValue = isDateColumn ? new Date(a.cells[columnIndex].querySelector('input').value) : a.cells[columnIndex].querySelector('input').value;
-              const bValue = isDateColumn ? new Date(b.cells[columnIndex].querySelector('input').value) : b.cells[columnIndex].querySelector('input').value;
-
-
-              if (isDateColumn) {
-                // 空の日付は最下位に
-                if (isNaN(aValue)) return 1;
-                if (isNaN(bValue)) return -1;
-                return aValue - bValue; // 日付の比較
-              } else {
-                return aValue.localeCompare(bValue); // 文字列の比較
-              }
-
-          });
-
-            // ソート順序を反転させるための変数
-            sortTable.order = sortTable.order === 'asc' ? 'desc' : 'asc';
-
-            //降順、昇順で処理を変える
-            if(sortTable.order === 'desc'){
-                rows.reverse();
-            }
-
-          // ソートされた行をテーブルに再追加
-          rows.forEach(row => tbody.appendChild(row));
-      }
-
-    // 初期状態で最初の行を追加
-    addRow();
   </script>
 </body>
 </html>
