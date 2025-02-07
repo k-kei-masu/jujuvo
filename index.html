@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>授受簿</title>
+  <style>
+    body {
+      font-family: sans-serif;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed; /* セルの幅を均等にする */
+    }
+
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: center;
+    }
+
+    th {
+      background-color: #f2f2f2;
+      cursor: pointer; /* ヘッダーにカーソルを合わせたときにポインターにする */
+    }
+
+    /* 担当者ステータス列 スタイル */
+    td:nth-child(3) input[type="date"] {
+        width: 130px; /* 入力欄を少し広めに */
+    }
+    /* 施工班ステータス列 スタイル */
+    td:nth-child(4) input[type="date"] {
+        width: 130px; /* 入力欄を少し広めに */
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    /* スマホ用のスタイル (iPhone SE3を想定) */
+    @media (max-width: 375px) {
+      table {
+        font-size: 14px; /* 文字サイズを少し小さく */
+      }
+      /* 担当者、施工班ステータス列をスマホ用に調整 */
+      td:nth-child(3) input[type="date"],
+      td:nth-child(4) input[type="date"] {
+          width: 95%; /* 入力欄を目一杯広げる */
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <h1>授受簿</h1>
+
+  <button onclick="hideCompletedRows()">完了分を非表示</button>
+
+  <table>
+    <thead>
+      <tr>
+        <th onclick="sortTable(0)">付託番号</th>
+        <th>担当者</th>
+        <th onclick="sortTable(2)">担当者ステータス移行月日</th>
+        <th onclick="sortTable(3)">施工班ステータス移行月日</th>
+        <th>担当者</th>
+      </tr>
+    </thead>
+    <tbody id="data-body">
+      <tr>
+        <td><input type="text" class="f-num"></td>
+        <td><input type="checkbox" class="status-check" onchange="updateDate(this, 2)"></td>
+        <td><input type="date" class="date-input" ></td>
+        <td><input type="date" class="date-input"></td>
+        <td><input type="checkbox" class="status-check" onchange="updateDate(this, 4)"></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <button onclick="addRow()">行を追加</button>
+
+  <script>
+    let nextRowNum = 1; // 次の行番号
+
+    // 行を追加する関数
+    function addRow() {
+      const tbody = document.getElementById('data-body');
+      const newRow = document.createElement('tr');
+      newRow.innerHTML = `
+        <td><input type="text" class="f-num"></td>
+        <td><input type="checkbox" class="status-check" onchange="updateDate(this, 2)"></td>
+        <td><input type="date" class="date-input"></td>
+        <td><input type="date" class="date-input"></td>
+        <td><input type="checkbox" class="status-check" onchange="updateDate(this, 4)"></td>
+      `;
+      tbody.appendChild(newRow);
+      nextRowNum++;
+    }
+
+    // チェックボックスが変更されたときに日付を更新する関数
+      function updateDate(checkbox, colIndex) {
+          const row = checkbox.closest('tr');
+          const dateInput = row.querySelectorAll('.date-input')[colIndex - 2];
+
+          if (checkbox.checked) {
+              const today = new Date();
+              const formattedDate = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
+              dateInput.value = formattedDate;
+          } else {
+              dateInput.value = ''; // チェックが外れたら日付をクリア
+          }
+      }
+
+    // 完了した行を非表示にする関数
+       function hideCompletedRows() {
+      const rows = document.querySelectorAll('#data-body tr');
+      rows.forEach(row => {
+        const checkboxes = row.querySelectorAll('.status-check');
+        //両方チェックされていたら非表示
+        if (checkboxes[0].checked && checkboxes[1].checked) {
+          row.classList.add('hidden');
+        }
+      });
+    }
+
+    // テーブルのソート機能
+      function sortTable(columnIndex) {
+          const tbody = document.getElementById('data-body');
+          const rows = Array.from(tbody.querySelectorAll('tr'));
+
+          const isDateColumn = [2, 3].includes(columnIndex); // 日付カラムかどうか
+
+          rows.sort((a, b) => {
+              const aValue = isDateColumn ? new Date(a.cells[columnIndex].querySelector('input').value) : a.cells[columnIndex].querySelector('input').value;
+              const bValue = isDateColumn ? new Date(b.cells[columnIndex].querySelector('input').value) : b.cells[columnIndex].querySelector('input').value;
+
+
+              if (isDateColumn) {
+                // 空の日付は最下位に
+                if (isNaN(aValue)) return 1;
+                if (isNaN(bValue)) return -1;
+                return aValue - bValue; // 日付の比較
+              } else {
+                return aValue.localeCompare(bValue); // 文字列の比較
+              }
+
+          });
+
+            // ソート順序を反転させるための変数
+            sortTable.order = sortTable.order === 'asc' ? 'desc' : 'asc';
+
+            //降順、昇順で処理を変える
+            if(sortTable.order === 'desc'){
+                rows.reverse();
+            }
+
+          // ソートされた行をテーブルに再追加
+          rows.forEach(row => tbody.appendChild(row));
+      }
+
+    // 初期状態で最初の行を追加
+    addRow();
+  </script>
+</body>
+</html>
