@@ -27,9 +27,10 @@
       cursor: pointer; /* ソート用にカーソルを変更 */
       background: #f0f0f0;
     }
-    tr.completed {
-      display: none; /* 完了行はデフォルト非表示 */
+    /* .completed は「完了行」の背景色やスタイルだけ付与する */
+    .completed {
       background-color: #e0ffe0;
+      /* display: none; は削除！ JS 側で制御する */
     }
     .hidden {
       display: none;
@@ -253,7 +254,7 @@
     }
 
     // -----------------------------
-    // 行の状態をチェックし、完了状態なら隠すために保存
+    // 行の状態をチェックし、完了状態なら非表示にするなどを行う
     // -----------------------------
     function checkAndSaveRow(row) {
       // 全ての input が埋まっていれば完了とみなす簡易実装
@@ -273,25 +274,30 @@
       // input の値を保存
       savedData[rowId] = {
         values: {},
-        completed: false
+        completed: isComplete
       };
 
       inputs.forEach(i => {
         savedData[rowId].values[i.name] = i.value;
       });
-      savedData[rowId].completed = isComplete;
-
       localStorage.setItem("flowData", JSON.stringify(savedData));
 
-      // 完了なら行を非表示にする(ただしチェックが入っていたら表示)
-      if (isComplete && !showCompletedToggle.checked) {
+      // 完了ならクラスを付与、そうでないならクラスを外す
+      if (isComplete) {
         row.classList.add("completed");
+        // 「完了項目を再表示」がOFFの場合、行を非表示にする
+        if (!showCompletedToggle.checked) {
+          row.style.display = "none";
+        } else {
+          row.style.display = "";
+        }
       } else {
         row.classList.remove("completed");
+        // 未完了なら必ず表示する
+        row.style.display = "";
       }
 
-      // 最下行が空でなければ、新しい行を追加する
-      // （最後の行がなにかしら入力されていたら新規行を一つ追加）
+      // 最下行が空でなければ、新しい行を追加
       addNewRowIfNeeded();
     }
 
@@ -337,9 +343,13 @@
             i.value = rowInfo.values[i.name];
           }
         });
-        // 完了ステータス
-        if (rowInfo.completed && !showCompletedToggle.checked) {
+        // 完了ステータスに応じてクラス付与＆表示/非表示
+        if (rowInfo.completed) {
           newRow.classList.add("completed");
+          // 「完了項目を再表示」がOFFなら非表示
+          if (!showCompletedToggle.checked) {
+            newRow.style.display = "none";
+          }
         }
       });
     }
@@ -347,30 +357,24 @@
     // -----------------------------
     // ヘッダクリックによるソート
     // -----------------------------
-    // 参考: テーブルのソートをシンプルに実装
     let currentSortCol = null;
     let currentSortDir = 1; // 1: 昇順, -1: 降順
 
     function sortTable(colName) {
       const rowsArray = Array.from(tbody.querySelectorAll("tr"));
 
-      // ソート関数
       rowsArray.sort((rowA, rowB) => {
         const aValue = getCellValue(rowA, colName);
         const bValue = getCellValue(rowB, colName);
-        // 文字列か日付か数値かなど必要に応じて判定して変換
-        // ここでは単純に文字列として比較する
         if (aValue < bValue) return -1 * currentSortDir;
         if (aValue > bValue) return 1 * currentSortDir;
         return 0;
       });
 
-      // 並べ替え後の要素を再挿入
       rowsArray.forEach(row => tbody.appendChild(row));
     }
 
     function getCellValue(row, colName) {
-      // データ列に応じて取得
       const index = {
         "futakuNo": 0, "a_name": 1, "a_date": 2, "b_name": 3, "b_date": 4,
         "c_name": 5, "c_date": 6, "d_name": 7, "d_date": 8
@@ -381,31 +385,28 @@
       return input ? input.value : "";
     }
 
-    // ヘッダクリックイベント
     const headers = table.querySelectorAll("thead th");
     headers.forEach(th => {
       th.addEventListener("click", () => {
         const colName = th.dataset.col;
         if (colName === currentSortCol) {
-          // 同じ列を再度クリックで昇順・降順の反転
-          currentSortDir *= -1;
+          currentSortDir *= -1; // 同じ列を再クリックで昇順/降順を反転
         } else {
-          // 別列がクリックされたら列と方向を初期化
           currentSortCol = colName;
-          currentSortDir = 1; // 昇順に戻す
+          currentSortDir = 1;  // 別の列をクリックしたら昇順へ
         }
         sortTable(colName);
       });
     });
 
     // -----------------------------
-    // イベント
+    // チェックボックスのイベント
     // -----------------------------
     showCompletedToggle.addEventListener("change", () => {
-      // 完了行を表示するかどうか
       const rows = tbody.querySelectorAll("tr");
       rows.forEach(row => {
         if (row.classList.contains("completed")) {
+          // 「完了項目を再表示」ONの場合は表示、OFFなら非表示
           row.style.display = showCompletedToggle.checked ? "" : "none";
         }
       });
