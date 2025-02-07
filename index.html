@@ -2,60 +2,160 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>授受簿サンプル</title>
   <style>
+    /* テーブルのスタイル */
     table {
+      width: 100%;
       border-collapse: collapse;
-      margin: 20px 0;
-      width: 300px; /* お好みで調整 */
+      margin-bottom: 1rem;
     }
     th, td {
-      border: 1px solid #333;
+      border: 1px solid #ccc;
+      padding: 0.5rem;
       text-align: center;
-      padding: 5px;
-      width: 60px; /* お好みで調整 */
     }
-    /* 付託番号だけ少し幅を広げる例 */
-    th:first-child, td:first-child {
-      width: 80px;
+    th {
+      cursor: pointer; /* ソート可能 */
+      background-color: #f0f0f0;
+    }
+    /* PC画面向け */
+    @media screen and (min-width: 768px) {
+      body {
+        margin: 2rem auto;
+        max-width: 800px;
+        font-size: 16px;
+      }
+    }
+    /* 非表示用クラス */
+    .hidden {
+      display: none;
     }
   </style>
 </head>
 <body>
-  <h1>授受簿イメージ</h1>
-  <table>
+  <h1>授受簿サンプル</h1>
+  
+  <!-- 新規登録フォーム -->
+  <div style="margin-bottom: 1rem;">
+    <label for="futakuInput">付託番号：</label>
+    <input type="text" id="futakuInput" placeholder="例：10000">
+    <button onclick="addRow()">新規登録</button>
+  </div>
+
+  <!-- 完了行の一括非表示 -->
+  <div style="margin-bottom: 1rem;">
+    <button onclick="hideCompletedRows()">一括に非表示</button>
+  </div>
+
+  <!-- テーブル -->
+  <table id="myTable">
     <thead>
       <tr>
-        <th>付託番号</th>
-        <th>作成</th>
-        <th>受領</th>
-        <th>返却</th>
+        <th onclick="sortTable(0)">付託番号</th>
+        <th onclick="sortTable(1)">作成</th>
+        <th onclick="sortTable(2)">受領</th>
+        <th onclick="sortTable(3)">返却</th>
       </tr>
     </thead>
     <tbody>
-      <tr>
-        <td>10000</td>
-        <!-- 作成 -->
-        <td>
-          <input type="checkbox" />
-          <br />
-          <!-- ここは手入力でも、type="date"でもOK -->
-          2/25
-        </td>
-        <!-- 受領 -->
-        <td>
-          <input type="checkbox" />
-          <br />
-          2/25
-        </td>
-        <!-- 返却 -->
-        <td>
-          <input type="checkbox" />
-          <br />
-          2/25
-        </td>
-      </tr>
+      <!-- 新規登録時に行が追加される -->
     </tbody>
   </table>
+
+  <script>
+    // ───────────
+    // テーブルソート
+    // ───────────
+    function sortTable(colIndex) {
+      const table = document.getElementById("myTable");
+      const tbody = table.querySelector("tbody");
+      const rows = Array.from(tbody.rows);
+      
+      // 0列目(付託番号)は文字列ソート、それ以降(作成/受領/返却)は日付ソート
+      const isDateSort = (colIndex > 0);
+
+      rows.sort((a, b) => {
+        if (isDateSort) {
+          // セル内の日付入力欄のvalueを比較
+          const dateAEl = a.cells[colIndex].querySelector('input[type="date"]');
+          const dateBEl = b.cells[colIndex].querySelector('input[type="date"]');
+          const dateA = dateAEl ? new Date(dateAEl.value).getTime() : 0;
+          const dateB = dateBEl ? new Date(dateBEl.value).getTime() : 0;
+          return dateA - dateB;
+        } else {
+          // 付託番号(文字列)ソート
+          const cellA = a.cells[colIndex].innerText;
+          const cellB = b.cells[colIndex].innerText;
+          return cellA.localeCompare(cellB, 'ja');
+        }
+      });
+
+      // ソートした順にtbodyへappend
+      rows.forEach(row => tbody.appendChild(row));
+    }
+
+    // ───────────────────
+    // 新規行をテーブルに追加
+    // ───────────────────
+    function addRow() {
+      const futakuInput = document.getElementById("futakuInput");
+      const futakuVal = futakuInput.value.trim();
+
+      if (!futakuVal) {
+        alert("付託番号を入力してください。");
+        return;
+      }
+
+      const tableBody = document.getElementById("myTable").getElementsByTagName("tbody")[0];
+      const newRow = tableBody.insertRow();
+
+      // 1列目(付託番号)
+      const cellFutaku = newRow.insertCell();
+      cellFutaku.textContent = futakuVal;
+
+      // 2列目(作成) - チェックボックス + 日付
+      const cellMake = newRow.insertCell();
+      cellMake.innerHTML = `
+        <input type="checkbox" data-stage="make">
+        <br>
+        <input type="date" data-stage="makeDate">
+      `;
+
+      // 3列目(受領)
+      const cellAccept = newRow.insertCell();
+      cellAccept.innerHTML = `
+        <input type="checkbox" data-stage="accept">
+        <br>
+        <input type="date" data-stage="acceptDate">
+      `;
+
+      // 4列目(返却) - ココをチェックしたら「完了」扱い
+      const cellReturn = newRow.insertCell();
+      cellReturn.innerHTML = `
+        <input type="checkbox" data-stage="return">
+        <br>
+        <input type="date" data-stage="returnDate">
+      `;
+
+      // 入力欄クリア
+      futakuInput.value = "";
+    }
+
+    // ─────────────────────────────
+    // 「返却」にチェックの入った行を一括非表示に
+    // ─────────────────────────────
+    function hideCompletedRows() {
+      const rows = document.querySelectorAll("#myTable tbody tr");
+      rows.forEach(row => {
+        // 返却チェックボックスを探してチェック状態なら非表示
+        const returnCheck = row.querySelector('input[type="checkbox"][data-stage="return"]');
+        if (returnCheck && returnCheck.checked) {
+          row.classList.add("hidden");
+        }
+      });
+    }
+  </script>
 </body>
 </html>
