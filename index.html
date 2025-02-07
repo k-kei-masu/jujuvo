@@ -2,63 +2,77 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <title>授受簿 電子化サンプル（独立ヘッダ＋固定列）</title>
+  <title>授受簿サンプル（独立ヘッダ＋先頭列）レスポンシブ対応</title>
   <style>
+    /* ======== 全体レイアウト ======== */
+    html, body {
+      margin: 0; 
+      padding: 0;
+      height: 100%;  /* 画面いっぱい使う */
+    }
     body {
+      display: flex;
+      flex-direction: column;
       font-family: sans-serif;
-      margin: 16px;
-    }
-    h1 {
-      margin-bottom: 8px;
-    }
-    #operator-section {
-      margin-bottom: 16px;
     }
 
-    /* 全体ラッパ */
+    /* 親コンテナ：上下に分割。上は操作パネル、下がメイン(ヘッダとテーブル群) */
     .container {
-      max-width: 100%;
-      overflow: hidden; /* 余計なオーバーフロー回避 */
+      display: flex;
+      flex-direction: column;
+      flex: 1;  /* 画面高さの余りを占有 */
     }
 
-    /* ヘッダー部分（テーブル）を置くコンテナ */
+    /* ======== 操作パネル部分 ======== */
+    .operator-section {
+      flex: 0 0 auto;
+      padding: 8px 16px;
+      background: #f9f9f9;
+      border-bottom: 1px solid #ccc;
+    }
+
+    /* ======== ヘッダテーブルのラッパ ======== */
     #headerContainer {
-      /* 横スクロール同期用にoverflow: auto; を付けている */
+      /* 横スクロール同期用に overflow-x: auto; */
       overflow-x: auto;
-      border: 1px solid #ccc;
+      border-bottom: 1px solid #ccc;
+      width: 100%; /* 横いっぱい使う */
     }
 
-    /* ヘッダー用テーブル */
+    /* ヘッダテーブル本体 */
     #headerTable {
       border-collapse: collapse;
-      min-width: 1000px; /* 横スクロールをテストするための例 */
-      white-space: nowrap; /* 折り返し防止 */
+      width: 100%;
+      table-layout: auto;
+      white-space: nowrap; /* 折り返しせずに横スクロール */
     }
     #headerTable th {
       border: 1px solid #ccc;
       padding: 8px;
       background: #f0f0f0;
       text-align: center;
-      min-width: 100px;
       cursor: pointer; /* ソート切り替え用 */
+      min-width: 100px;
     }
 
-    /* メイン部全体を横に並べる */
+    /* ======== メイン表示エリア ======== */
     .main-container {
+      flex: 1; /* 残りの高さを全部使う */
       display: flex;
-      border: 1px solid #ccc;
-      height: 400px; /* 縦の高さを固定し、overflowを出す */
+      overflow: hidden; /* 子コンテナでスクロールを管理 */
     }
 
-    /* 左側：付託番号表示 */
+    /* 左テーブル用コンテナ（付託番号） */
     #leftContainer {
-      overflow-y: hidden; /* 縦スクロールは右側で操作し、同期させる */
+      overflow-y: hidden; /* 縦スクロールは #rightContainer で行い同期 */
       border-right: 1px solid #ccc;
-      flex-shrink: 0; /* 幅を固定/最小化しないように */
+      flex: 0 0 auto;
+      background: #fff;
     }
     #leftTable {
       border-collapse: collapse;
-      min-width: 120px; /* 付託番号欄の幅 */
+      width: 100%;
+      table-layout: auto;
       white-space: nowrap;
     }
     #leftTable td {
@@ -66,17 +80,19 @@
       padding: 8px;
       text-align: center;
       vertical-align: middle;
+      min-width: 80px; /* 付託番号欄の最低幅 */
     }
 
-    /* 右側：メインテーブル */
+    /* 右テーブル用コンテナ（メイン項目） */
     #rightContainer {
-      overflow: auto; /* ここで縦横スクロール可能にする */
-      flex: 1; /* 残りスペースを使う */
+      overflow: auto; /* ここで縦横スクロール */
+      flex: 1;
+      background: #fff;
     }
     #rightTable {
       border-collapse: collapse;
-      /* ヘッダに合わせて最低幅を揃える。さらに大きくしても良い */
-      min-width: 1000px;
+      width: 100%;
+      table-layout: auto;
       white-space: nowrap;
     }
     #rightTable td {
@@ -84,10 +100,10 @@
       padding: 8px;
       text-align: center;
       vertical-align: middle;
-      min-width: 100px;
+      min-width: 100px; /* a,b,c,dグループ欄の最低幅 */
     }
 
-    /* 完了行の色付けのみ。非表示はJSで制御する */
+    /* ======== 完了行のスタイル（表示/非表示はJS） ======== */
     .completed-left {
       background-color: #e0ffe0;
     }
@@ -95,21 +111,40 @@
       background-color: #e0ffe0;
     }
 
+    /* ======== ボタンのスタイル ======== */
     .fill-operator-btn,
     .fill-date-btn {
-      margin: 2px;
+      margin-left: 4px;
       cursor: pointer;
       font-size: 12px;
+    }
+
+    /* ======== レスポンシブ対応（モバイル等で幅が狭いとき） ======== */
+    @media (max-width: 768px) {
+      .main-container {
+        flex-direction: column; /* 左右分割→上下分割へ */
+      }
+      #leftContainer {
+        flex: 0 0 auto;
+        overflow-x: auto; /* 横スクロールを許可 */
+        border: none;
+        border-bottom: 1px solid #ccc;
+      }
+      #rightContainer {
+        flex: 1;
+        overflow: auto; /* 縦スクロール */
+      }
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>授受簿 電子化サンプル</h1>
-    <div id="operator-section">
-      操作者名：
-      <input type="text" id="operatorName" placeholder="操作者名を入力" />
-      <label>
+    <!-- 操作パネル -->
+    <div class="operator-section">
+      <label>操作者名：
+        <input type="text" id="operatorName" placeholder="操作者名を入力" />
+      </label>
+      <label style="margin-left:16px;">
         <input type="checkbox" id="showCompletedToggle" />
         完了項目を再表示
       </label>
@@ -134,22 +169,22 @@
       </table>
     </div>
 
-    <!-- メイン部分：左列（付託番号）＋右テーブル（その他カラム） -->
+    <!-- メイン部： 左(付託番号テーブル) + 右(その他項目テーブル) -->
     <div class="main-container">
-      <!-- 左側：付託番号を表示するテーブル -->
+      <!-- 左：付託番号だけを並べるテーブル -->
       <div id="leftContainer">
         <table id="leftTable">
           <tbody>
-            <!-- JSで行追加 -->
+            <!-- JSで行を追加 -->
           </tbody>
         </table>
       </div>
 
-      <!-- 右側：メインテーブル -->
+      <!-- 右：a,b,c,d などの項目を並べるテーブル -->
       <div id="rightContainer">
         <table id="rightTable">
           <tbody>
-            <!-- JSで行追加 -->
+            <!-- JSで行を追加 -->
           </tbody>
         </table>
       </div>
@@ -157,206 +192,92 @@
   </div>
 
   <script>
-    /*************************************************************
-     * グローバル的に使う要素参照
-     *************************************************************/
+    /********************************************************
+     * グローバル変数や要素参照
+     ********************************************************/
     const operatorNameInput = document.getElementById("operatorName");
     const showCompletedToggle = document.getElementById("showCompletedToggle");
 
-    const leftTableBody  = document.querySelector("#leftTable tbody");
+    const headerContainer = document.getElementById("headerContainer");
+    const leftContainer = document.getElementById("leftContainer");
+    const rightContainer = document.getElementById("rightContainer");
+
+    const leftTableBody = document.querySelector("#leftTable tbody");
     const rightTableBody = document.querySelector("#rightTable tbody");
 
-    const headerContainer = document.getElementById("headerContainer");
-    const rightContainer  = document.getElementById("rightContainer");
-    const leftContainer   = document.getElementById("leftContainer");
-
+    // 行ID -> { id, leftTr, rightTr, completed }
+    let rowDataMap = {};
     // ソート関連
     let currentSortCol = null;
     let currentSortDir = 1; // 1: 昇順, -1: 降順
 
-    // 各行を一意に管理するためのデータ構造: { rowId: { ... } }
-    // localStorage に格納もする
-    // rowId は Date.now() などで生成
-    // leftTr, rightTr は実際のDOM要素参照
-    let rowDataMap = {};
-
-    /*************************************************************
-     * ページ読み込み時の初期化
-     *************************************************************/
+    /********************************************************
+     * ページ読み込み後の初期化
+     ********************************************************/
     window.addEventListener("DOMContentLoaded", () => {
       attachHeaderSortEvents();
       loadDataFromStorage();
-      addNewRowIfNeeded(); // 初回行が無ければ作る
+      addNewRowIfNeeded();
 
-      // スクロール同期イベント
+      // スクロール同期
       rightContainer.addEventListener("scroll", syncScroll);
+      // 完了項目を再表示
       showCompletedToggle.addEventListener("change", toggleCompletedVisibility);
     });
 
-    /*************************************************************
+    /********************************************************
      * スクロール同期
-     *************************************************************/
+     ********************************************************/
     function syncScroll() {
-      // 右側の縦スクロール量を左側に反映
+      // 縦スクロールを左コンテナに同期
       leftContainer.scrollTop = rightContainer.scrollTop;
-      // 右側の横スクロール量をヘッダーに反映
+      // 横スクロールをヘッダコンテナに同期
       headerContainer.scrollLeft = rightContainer.scrollLeft;
     }
 
-    /*************************************************************
-     * 行追加処理
-     *************************************************************/
+    /********************************************************
+     * 行追加
+     ********************************************************/
     function addNewRow() {
-      const newId = Date.now().toString(); // ざっくり一意ID
-      const leftTr  = document.createElement("tr");
-      const rightTr = document.createElement("tr");
+      const newId = Date.now().toString();
 
-      // 左テーブル（付託番号1列）
+      // 左側（付託番号）行
+      const leftTr = document.createElement("tr");
       const futakuTd = document.createElement("td");
       const futakuInput = document.createElement("input");
       futakuInput.type = "text";
       futakuInput.name = "futakuNo";
       futakuTd.appendChild(futakuInput);
       leftTr.appendChild(futakuTd);
+      leftTableBody.appendChild(leftTr);
 
-      // 右テーブル（a,b,c,dグループ8列）
-      // a. 名前
-      const aNameTd = document.createElement("td");
-      const aNameInput = document.createElement("input");
-      aNameInput.type = "text";
-      aNameInput.name = "a_name";
-      const aNameBtn = document.createElement("button");
-      aNameBtn.textContent = "操作者名";
-      aNameBtn.className = "fill-operator-btn";
-      aNameBtn.onclick = () => {
-        aNameInput.value = operatorNameInput.value;
-        checkAndSaveRow(newId);
-      };
-      aNameTd.appendChild(aNameInput);
-      aNameTd.appendChild(aNameBtn);
+      // 右側（a,b,c,dグループ）行
+      const rightTr = document.createElement("tr");
+      // a. 記載者名
+      const aNameTd = createInputTd("a_name");
       rightTr.appendChild(aNameTd);
-
-      // a. 日付
-      const aDateTd = document.createElement("td");
-      const aDateInput = document.createElement("input");
-      aDateInput.type = "date";
-      aDateInput.name = "a_date";
-      const aDateBtn = document.createElement("button");
-      aDateBtn.textContent = "今日";
-      aDateBtn.className = "fill-date-btn";
-      aDateBtn.onclick = () => {
-        aDateInput.value = getToday();
-        checkAndSaveRow(newId);
-      };
-      aDateTd.appendChild(aDateInput);
-      aDateTd.appendChild(aDateBtn);
+      // a. 月日
+      const aDateTd = createDateTd("a_date");
       rightTr.appendChild(aDateTd);
-
-      // b. 名前
-      const bNameTd = document.createElement("td");
-      const bNameInput = document.createElement("input");
-      bNameInput.type = "text";
-      bNameInput.name = "b_name";
-      const bNameBtn = document.createElement("button");
-      bNameBtn.textContent = "操作者名";
-      bNameBtn.className = "fill-operator-btn";
-      bNameBtn.onclick = () => {
-        bNameInput.value = operatorNameInput.value;
-        checkAndSaveRow(newId);
-      };
-      bNameTd.appendChild(bNameInput);
-      bNameTd.appendChild(bNameBtn);
+      // b. 受け取り者名
+      const bNameTd = createInputTd("b_name");
       rightTr.appendChild(bNameTd);
-
-      // b. 日付
-      const bDateTd = document.createElement("td");
-      const bDateInput = document.createElement("input");
-      bDateInput.type = "date";
-      bDateInput.name = "b_date";
-      const bDateBtn = document.createElement("button");
-      bDateBtn.textContent = "今日";
-      bDateBtn.className = "fill-date-btn";
-      bDateBtn.onclick = () => {
-        bDateInput.value = getToday();
-        checkAndSaveRow(newId);
-      };
-      bDateTd.appendChild(bDateInput);
-      bDateTd.appendChild(bDateBtn);
+      // b. 月日
+      const bDateTd = createDateTd("b_date");
       rightTr.appendChild(bDateTd);
-
       // c. 返却者名
-      const cNameTd = document.createElement("td");
-      const cNameInput = document.createElement("input");
-      cNameInput.type = "text";
-      cNameInput.name = "c_name";
-      const cNameBtn = document.createElement("button");
-      cNameBtn.textContent = "操作者名";
-      cNameBtn.className = "fill-operator-btn";
-      cNameBtn.onclick = () => {
-        cNameInput.value = operatorNameInput.value;
-        checkAndSaveRow(newId);
-      };
-      cNameTd.appendChild(cNameInput);
-      cNameTd.appendChild(cNameBtn);
+      const cNameTd = createInputTd("c_name");
       rightTr.appendChild(cNameTd);
-
-      // c. 日付
-      const cDateTd = document.createElement("td");
-      const cDateInput = document.createElement("input");
-      cDateInput.type = "date";
-      cDateInput.name = "c_date";
-      const cDateBtn = document.createElement("button");
-      cDateBtn.textContent = "今日";
-      cDateBtn.className = "fill-date-btn";
-      cDateBtn.onclick = () => {
-        cDateInput.value = getToday();
-        checkAndSaveRow(newId);
-      };
-      cDateTd.appendChild(cDateInput);
-      cDateTd.appendChild(cDateBtn);
+      // c. 月日
+      const cDateTd = createDateTd("c_date");
       rightTr.appendChild(cDateTd);
-
       // d. 受け取り者名
-      const dNameTd = document.createElement("td");
-      const dNameInput = document.createElement("input");
-      dNameInput.type = "text";
-      dNameInput.name = "d_name";
-      const dNameBtn = document.createElement("button");
-      dNameBtn.textContent = "操作者名";
-      dNameBtn.className = "fill-operator-btn";
-      dNameBtn.onclick = () => {
-        dNameInput.value = operatorNameInput.value;
-        checkAndSaveRow(newId);
-      };
-      dNameTd.appendChild(dNameInput);
-      dNameTd.appendChild(dNameBtn);
+      const dNameTd = createInputTd("d_name");
       rightTr.appendChild(dNameTd);
-
-      // d. 日付
-      const dDateTd = document.createElement("td");
-      const dDateInput = document.createElement("input");
-      dDateInput.type = "date";
-      dDateInput.name = "d_date";
-      const dDateBtn = document.createElement("button");
-      dDateBtn.textContent = "今日";
-      dDateBtn.className = "fill-date-btn";
-      dDateBtn.onclick = () => {
-        dDateInput.value = getToday();
-        checkAndSaveRow(newId);
-      };
-      dDateTd.appendChild(dDateInput);
-      dDateTd.appendChild(dDateBtn);
+      // d. 月日
+      const dDateTd = createDateTd("d_date");
       rightTr.appendChild(dDateTd);
 
-      // イベントリスナ登録（値が変わったら保存チェック）
-      const allInputs = [futakuInput, aNameInput, aDateInput, bNameInput, bDateInput,
-                         cNameInput, cDateInput, dNameInput, dDateInput];
-      allInputs.forEach(inp => {
-        inp.addEventListener("change", () => checkAndSaveRow(newId));
-      });
-
-      // DOMに追加
-      leftTableBody.appendChild(leftTr);
       rightTableBody.appendChild(rightTr);
 
       // rowDataMapに登録
@@ -364,81 +285,128 @@
         id: newId,
         leftTr: leftTr,
         rightTr: rightTr,
-        completed: false,
+        completed: false
       };
 
-      // 新しい行IDを返す
+      // イベントリスナ登録
+      futakuInput.addEventListener("change", () => checkAndSaveRow(newId));
+      rightTr.querySelectorAll("input").forEach(input => {
+        input.addEventListener("change", () => checkAndSaveRow(newId));
+      });
+
       return newId;
     }
 
-    /*************************************************************
-     * 行が埋まったら新しい行を追加
-     *************************************************************/
+    // テキスト入力セルを生成
+    function createInputTd(name) {
+      const td = document.createElement("td");
+      const input = document.createElement("input");
+      input.type = "text";
+      input.name = name;
+
+      const btn = document.createElement("button");
+      btn.className = "fill-operator-btn";
+      btn.textContent = "操作者名";
+      btn.onclick = () => {
+        input.value = operatorNameInput.value;
+        findAndCheckRowId(td);
+      };
+
+      td.appendChild(input);
+      td.appendChild(btn);
+      return td;
+    }
+
+    // 日付入力セルを生成
+    function createDateTd(name) {
+      const td = document.createElement("td");
+      const input = document.createElement("input");
+      input.type = "date";
+      input.name = name;
+
+      const btn = document.createElement("button");
+      btn.className = "fill-date-btn";
+      btn.textContent = "今日";
+      btn.onclick = () => {
+        input.value = getToday();
+        findAndCheckRowId(td);
+      };
+
+      td.appendChild(input);
+      td.appendChild(btn);
+      return td;
+    }
+
+    // 親TRを遡って rowId を探す→ checkAndSaveRow() を呼び出す
+    function findAndCheckRowId(td) {
+      const tr = td.closest("tr");
+      if (!tr) return;
+      for (let k in rowDataMap) {
+        if (rowDataMap[k].rightTr === tr) {
+          checkAndSaveRow(k);
+          break;
+        }
+      }
+    }
+
+    // 今日の日付(YYYY-MM-DD)
+    function getToday() {
+      const now = new Date();
+      const y = now.getFullYear();
+      const m = String(now.getMonth() + 1).padStart(2, '0');
+      const d = String(now.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    }
+
+    /********************************************************
+     * 最下行が入力済みなら新行を追加
+     ********************************************************/
     function addNewRowIfNeeded() {
-      // 行が無ければまず一つ作る
-      if (Object.keys(rowDataMap).length === 0) {
+      const keys = Object.keys(rowDataMap);
+      if (keys.length === 0) {
         addNewRow();
         return;
       }
-      // 最後の行が何らかの入力済みなら、新行を追加
-      // （最後の行 = IDが最も新しい行 という簡易判定）
-      const lastId = Object.keys(rowDataMap)
-        .map(id => parseInt(id, 10))
-        .sort((a,b) => a-b)
-        .pop(); // 最大値
+      // 最新行IDを特定（数値ソートで最大IDを取得）
+      const lastId = keys.map(k => parseInt(k,10)).sort((a,b)=>a-b).pop();
+      const rowObj = rowDataMap[lastId];
 
-      const {leftTr, rightTr} = rowDataMap[lastId];
-      // 左の付託番号input
-      const futakuInput = leftTr.querySelector("input[name='futakuNo']");
-      // 右の8個
-      const inputsRight = rightTr.querySelectorAll("input[type='text'], input[type='date']");
+      const futakuInput = rowObj.leftTr.querySelector("input[name='futakuNo']");
+      const rightInputs = rowObj.rightTr.querySelectorAll("input");
 
-      let isAnyFilled = false;
-      if (futakuInput.value.trim() !== "") {
-        isAnyFilled = true;
-      }
-      inputsRight.forEach(inp => {
-        if (inp.value.trim() !== "") {
-          isAnyFilled = true;
-        }
+      let filled = false;
+      if (futakuInput.value.trim() !== "") filled = true;
+      rightInputs.forEach(inp => {
+        if (inp.value.trim() !== "") filled = true;
       });
-      if (isAnyFilled) {
+      if (filled) {
         addNewRow();
       }
     }
 
-    /*************************************************************
-     * 行データ保存＋完了チェック
-     *************************************************************/
+    /********************************************************
+     * 行の完了チェック＆保存
+     ********************************************************/
     function checkAndSaveRow(rowId) {
       const rowObj = rowDataMap[rowId];
       if (!rowObj) return;
 
-      // 付託番号
-      const futakuInput = rowObj.leftTr.querySelector("input[name='futakuNo']");
-      // 右側 inputs
-      const aName = rowObj.rightTr.querySelector("input[name='a_name']");
-      const aDate = rowObj.rightTr.querySelector("input[name='a_date']");
-      const bName = rowObj.rightTr.querySelector("input[name='b_name']");
-      const bDate = rowObj.rightTr.querySelector("input[name='b_date']");
-      const cName = rowObj.rightTr.querySelector("input[name='c_name']");
-      const cDate = rowObj.rightTr.querySelector("input[name='c_date']");
-      const dName = rowObj.rightTr.querySelector("input[name='d_name']");
-      const dDate = rowObj.rightTr.querySelector("input[name='d_date']");
+      const futakuVal = rowObj.leftTr.querySelector("input[name='futakuNo']").value.trim();
+      const aNameVal = rowObj.rightTr.querySelector("input[name='a_name']").value.trim();
+      const aDateVal = rowObj.rightTr.querySelector("input[name='a_date']").value.trim();
+      const bNameVal = rowObj.rightTr.querySelector("input[name='b_name']").value.trim();
+      const bDateVal = rowObj.rightTr.querySelector("input[name='b_date']").value.trim();
+      const cNameVal = rowObj.rightTr.querySelector("input[name='c_name']").value.trim();
+      const cDateVal = rowObj.rightTr.querySelector("input[name='c_date']").value.trim();
+      const dNameVal = rowObj.rightTr.querySelector("input[name='d_name']").value.trim();
+      const dDateVal = rowObj.rightTr.querySelector("input[name='d_date']").value.trim();
 
-      // 全部埋まっていれば完了
-      const values = [
-        futakuInput.value,
-        aName.value, aDate.value,
-        bName.value, bDate.value,
-        cName.value, cDate.value,
-        dName.value, dDate.value
-      ];
-      let isComplete = values.every(v => v.trim() !== "");
+      // 全て埋まっていれば完了
+      const isComplete = (futakuVal && aNameVal && aDateVal && bNameVal && bDateVal &&
+                          cNameVal && cDateVal && dNameVal && dDateVal);
 
       rowObj.completed = isComplete;
 
-      // 見た目に反映
       if (isComplete) {
         rowObj.leftTr.classList.add("completed-left");
         rowObj.rightTr.classList.add("completed-right");
@@ -456,124 +424,33 @@
         rowObj.rightTr.style.display = "";
       }
 
-      // localStorage 保存
-      saveAllRowsToStorage();
-
-      // 必要なら新しい行を追加
+      saveDataToStorage();
       addNewRowIfNeeded();
     }
 
-    /*************************************************************
-     * 完了行を再表示／非表示の切替
-     *************************************************************/
+    /********************************************************
+     * 完了行の再表示・非表示の切り替え
+     ********************************************************/
     function toggleCompletedVisibility() {
-      const showCompleted = showCompletedToggle.checked;
+      const showComp = showCompletedToggle.checked;
       Object.values(rowDataMap).forEach(rowObj => {
         if (rowObj.completed) {
-          rowObj.leftTr.style.display = showCompleted ? "" : "none";
-          rowObj.rightTr.style.display = showCompleted ? "" : "none";
+          rowObj.leftTr.style.display = showComp ? "" : "none";
+          rowObj.rightTr.style.display = showComp ? "" : "none";
         }
       });
     }
 
-    /*************************************************************
-     * データの読み込み／保存
-     *************************************************************/
-    function getToday() {
-      const now = new Date();
-      const y = now.getFullYear();
-      const m = String(now.getMonth()+1).padStart(2, '0');
-      const d = String(now.getDate()).padStart(2, '0');
-      return `${y}-${m}-${d}`;
-    }
-
-    function loadDataFromStorage() {
-      const str = localStorage.getItem("flowDataComplex");
-      if (!str) return;
-      const stored = JSON.parse(str);
-      // rowId毎に行を復元
-      Object.keys(stored).forEach(rowId => {
-        const rowInfo = stored[rowId];
-        const newId = addNewRow();
-        // newId と rowId は違うが、ちゃんと合わせたいので… 
-        // → ここでは newId は捨て、DOMだけ用意してあとから rowObj の key を置き換える手もある
-        //   あるいは addNewRow(rowId) のように rowIdを強制指定する仕組みにしてもよい
-        // シンプルなやり方：addNewRow() で rowId とDOMを作ったあと、rowDataMap から取り出してDOMに値を反映する
-
-        // 作りたてのID(= newId) の rowObj を削除し、rowId のキーで再登録
-        const newObj = rowDataMap[newId];
-        delete rowDataMap[newId];
-        rowDataMap[rowId] = newObj;
-        newObj.id = rowId;
-
-        // 入力欄
-        const futakuInput = newObj.leftTr.querySelector("input[name='futakuNo']");
-        futakuInput.value = rowInfo.values.futakuNo || "";
-
-        newObj.rightTr.querySelector("input[name='a_name']").value = rowInfo.values.a_name || "";
-        newObj.rightTr.querySelector("input[name='a_date']").value = rowInfo.values.a_date || "";
-        newObj.rightTr.querySelector("input[name='b_name']").value = rowInfo.values.b_name || "";
-        newObj.rightTr.querySelector("input[name='b_date']").value = rowInfo.values.b_date || "";
-        newObj.rightTr.querySelector("input[name='c_name']").value = rowInfo.values.c_name || "";
-        newObj.rightTr.querySelector("input[name='c_date']").value = rowInfo.values.c_date || "";
-        newObj.rightTr.querySelector("input[name='d_name']").value = rowInfo.values.d_name || "";
-        newObj.rightTr.querySelector("input[name='d_date']").value = rowInfo.values.d_date || "";
-
-        // 完了ステータス
-        newObj.completed = rowInfo.completed || false;
-        if (newObj.completed) {
-          newObj.leftTr.classList.add("completed-left");
-          newObj.rightTr.classList.add("completed-right");
-          if (!showCompletedToggle.checked) {
-            newObj.leftTr.style.display = "none";
-            newObj.rightTr.style.display = "none";
-          }
-        }
-      });
-    }
-
-    function saveAllRowsToStorage() {
-      const storeObj = {};
-      Object.keys(rowDataMap).forEach(rowId => {
-        const rowObj = rowDataMap[rowId];
-        const futakuInput = rowObj.leftTr.querySelector("input[name='futakuNo']");
-        const aName = rowObj.rightTr.querySelector("input[name='a_name']");
-        const aDate = rowObj.rightTr.querySelector("input[name='a_date']");
-        const bName = rowObj.rightTr.querySelector("input[name='b_name']");
-        const bDate = rowObj.rightTr.querySelector("input[name='b_date']");
-        const cName = rowObj.rightTr.querySelector("input[name='c_name']");
-        const cDate = rowObj.rightTr.querySelector("input[name='c_date']");
-        const dName = rowObj.rightTr.querySelector("input[name='d_name']");
-        const dDate = rowObj.rightTr.querySelector("input[name='d_date']");
-
-        storeObj[rowId] = {
-          completed: rowObj.completed,
-          values: {
-            futakuNo: futakuInput.value,
-            a_name: aName.value,
-            a_date: aDate.value,
-            b_name: bName.value,
-            b_date: bDate.value,
-            c_name: cName.value,
-            c_date: cDate.value,
-            d_name: dName.value,
-            d_date: dDate.value
-          }
-        };
-      });
-      localStorage.setItem("flowDataComplex", JSON.stringify(storeObj));
-    }
-
-    /*************************************************************
+    /********************************************************
      * ソート機能
-     *************************************************************/
+     ********************************************************/
     function attachHeaderSortEvents() {
       const headerThs = document.querySelectorAll("#headerTable th");
       headerThs.forEach(th => {
         th.addEventListener("click", () => {
           const colName = th.dataset.col;
           if (colName === currentSortCol) {
-            // 同じ列を再度クリックなら昇降反転
+            // 同じ列を再度クリックすると昇降反転
             currentSortDir *= -1;
           } else {
             currentSortCol = colName;
@@ -585,7 +462,8 @@
     }
 
     function sortByColumn(colName) {
-      // rowDataMap から rowObj の配列を作り、ソート後に leftTableBody, rightTableBody を組みなおす
+      // rowDataMap から rowObj配列を取り出し、
+      // ソート後、左テーブルtbody, 右テーブルtbody の順序を並べ替える
       const rowObjs = Object.values(rowDataMap);
 
       rowObjs.sort((a, b) => {
@@ -596,24 +474,102 @@
         return 0;
       });
 
-      // ソート後、DOM上の順序を並べ替え
+      // ソート後に append し直す
       rowObjs.forEach(rowObj => {
         leftTableBody.appendChild(rowObj.leftTr);
         rightTableBody.appendChild(rowObj.rightTr);
       });
     }
 
-    // ソート比較用: rowObj -> ある列の値を取得
+    // 指定した行の指定列の値
     function getRowValue(rowObj, colName) {
       if (colName === "futakuNo") {
-        // 左テーブル
         const inp = rowObj.leftTr.querySelector("input[name='futakuNo']");
         return inp ? inp.value : "";
       } else {
-        // 右テーブル
         const inp = rowObj.rightTr.querySelector(`input[name='${colName}']`);
         return inp ? inp.value : "";
       }
+    }
+
+    /********************************************************
+     * データの保存・読み込み
+     ********************************************************/
+    function saveDataToStorage() {
+      const storeObj = {};
+      Object.keys(rowDataMap).forEach(rowId => {
+        const rowObj = rowDataMap[rowId];
+        const futakuVal = rowObj.leftTr.querySelector("input[name='futakuNo']").value;
+        const aNameVal = rowObj.rightTr.querySelector("input[name='a_name']").value;
+        const aDateVal = rowObj.rightTr.querySelector("input[name='a_date']").value;
+        const bNameVal = rowObj.rightTr.querySelector("input[name='b_name']").value;
+        const bDateVal = rowObj.rightTr.querySelector("input[name='b_date']").value;
+        const cNameVal = rowObj.rightTr.querySelector("input[name='c_name']").value;
+        const cDateVal = rowObj.rightTr.querySelector("input[name='c_date']").value;
+        const dNameVal = rowObj.rightTr.querySelector("input[name='d_name']").value;
+        const dDateVal = rowObj.rightTr.querySelector("input[name='d_date']").value;
+
+        storeObj[rowId] = {
+          completed: rowObj.completed,
+          values: {
+            futakuNo: futakuVal,
+            a_name: aNameVal,
+            a_date: aDateVal,
+            b_name: bNameVal,
+            b_date: bDateVal,
+            c_name: cNameVal,
+            c_date: cDateVal,
+            d_name: dNameVal,
+            d_date: dDateVal
+          }
+        };
+      });
+      localStorage.setItem("flowDataComplex", JSON.stringify(storeObj));
+    }
+
+    function loadDataFromStorage() {
+      const str = localStorage.getItem("flowDataComplex");
+      if (!str) return;
+      const stored = JSON.parse(str);
+
+      // 1行ずつ復元
+      Object.keys(stored).forEach(rowId => {
+        const rowInfo = stored[rowId];
+        const newCreatedId = addNewRow();
+
+        // addNewRow() で生成された臨時ID の rowObjを取得し、置き換える
+        const newObj = rowDataMap[newCreatedId];
+        delete rowDataMap[newCreatedId];
+
+        rowDataMap[rowId] = newObj;
+        newObj.id = rowId;
+
+        // 左(付託番号)
+        newObj.leftTr.querySelector("input[name='futakuNo']").value =
+          rowInfo.values.futakuNo || "";
+
+        // 右(a,b,c,d...)
+        newObj.rightTr.querySelector("input[name='a_name']").value = rowInfo.values.a_name || "";
+        newObj.rightTr.querySelector("input[name='a_date']").value = rowInfo.values.a_date || "";
+        newObj.rightTr.querySelector("input[name='b_name']").value = rowInfo.values.b_name || "";
+        newObj.rightTr.querySelector("input[name='b_date']").value = rowInfo.values.b_date || "";
+        newObj.rightTr.querySelector("input[name='c_name']").value = rowInfo.values.c_name || "";
+        newObj.rightTr.querySelector("input[name='c_date']").value = rowInfo.values.c_date || "";
+        newObj.rightTr.querySelector("input[name='d_name']").value = rowInfo.values.d_name || "";
+        newObj.rightTr.querySelector("input[name='d_date']").value = rowInfo.values.d_date || "";
+
+        // 完了状態
+        newObj.completed = rowInfo.completed;
+        if (rowInfo.completed) {
+          newObj.leftTr.classList.add("completed-left");
+          newObj.rightTr.classList.add("completed-right");
+          // 「完了項目を再表示」がOFFなら非表示
+          if (!showCompletedToggle.checked) {
+            newObj.leftTr.style.display = "none";
+            newObj.rightTr.style.display = "none";
+          }
+        }
+      });
     }
   </script>
 </body>
