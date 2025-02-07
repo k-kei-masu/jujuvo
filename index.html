@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <title>授受簿 電子化サンプル</title>
+  <title>授受簿 電子化サンプル（固定ヘッダ・固定列）</title>
   <style>
     body {
       font-family: sans-serif;
@@ -15,45 +15,55 @@
       margin-bottom: 16px;
     }
 
-    /* テーブルをスクロールするためのラッパ */
+    /* スクロール領域を作るためのラッパ要素 */
     .table-wrapper {
-      max-height: 400px; /* 必要に応じて高さを調整 */
+      /* 縦も横もスクロールできるように */
       overflow: auto;
+      /* 画面高さに応じて調整。例示で固定値にしています。 */
+      max-height: 500px;
       border: 1px solid #ccc;
     }
 
     table {
-      width: 100%;
+      /* テーブルの最小幅を設定し、
+         スマホなどで狭い場合は横スクロールで閲覧 */
+      min-width: 1000px; 
       border-collapse: collapse;
+      table-layout: auto;
+      /* セル内改行を防止して横スクロールを発生させる */
+      white-space: nowrap;
     }
+
     th, td {
       border: 1px solid #ccc;
       padding: 8px;
       text-align: center;
-      min-width: 100px; /* 列の最小幅を設定（必要に応じて調整） */
+      vertical-align: middle;
     }
 
-    /* テーブルヘッダを画面上部に固定 */
+    /* stickyヘッダ */
     thead th {
       position: sticky;
       top: 0;
       background: #f0f0f0;
-      z-index: 2; /* 先頭列との重なり制御 */
+      z-index: 2; /* 背景と重なり制御を安定させるため */
     }
 
-    /* 最初の列（付託番号列）を左に固定 */
+    /* 1列目（付託番号列）の固定 */
+    /* ここでは「th:first-child, td:first-child」で指定 */
     th:first-child,
     td:first-child {
       position: sticky;
       left: 0;
-      background-color: #f0f0f0; 
-      z-index: 3; /* ヘッダより大きい値にすることで重なりを正しく表示 */
+      background: #f0f0f0; /* スクロール時の重なりを分かりやすくするため */
+      z-index: 3; /* ヘッダより大きめにして重なりを回避 */
     }
 
-    /* completed は完了行の色付けのみ */
+    /* 完了行の色付けのみ。表示/非表示はJSで制御 */
     .completed {
       background-color: #e0ffe0;
     }
+
     .fill-operator-btn,
     .fill-date-btn {
       margin: 2px;
@@ -75,7 +85,7 @@
     </label>
   </div>
 
-  <!-- テーブルをスクロールさせるためにラッパを追加 -->
+  <!-- テーブルスクロール領域 -->
   <div class="table-wrapper">
     <table id="recordTable">
       <thead>
@@ -96,7 +106,7 @@
         </tr>
       </thead>
       <tbody>
-        <!-- ここに自動的に行を追加していく -->
+        <!-- ここに自動的に行を追加 -->
       </tbody>
     </table>
   </div>
@@ -105,7 +115,6 @@
     // -----------------------------
     // ユーティリティ
     // -----------------------------
-    // 当日の日付を取得する関数（YYYY-MM-DD形式）
     function getToday() {
       const now = new Date();
       const y = now.getFullYear();
@@ -121,7 +130,7 @@
     const showCompletedToggle = document.getElementById("showCompletedToggle");
 
     // -----------------------------
-    // 行を追加する
+    // 行を追加
     // -----------------------------
     function addNewRow() {
       const newRow = document.createElement("tr");
@@ -134,7 +143,7 @@
       futakuCell.appendChild(futakuInput);
       newRow.appendChild(futakuCell);
 
-      // a. 記載者名 + 自動入力ボタン
+      // a. 記載者名 + 操作者名自動入力ボタン
       const aNameCell = document.createElement("td");
       const aNameInput = document.createElement("input");
       aNameInput.type = "text";
@@ -150,7 +159,7 @@
       aNameCell.appendChild(aNameBtn);
       newRow.appendChild(aNameCell);
 
-      // a. 日付 + 自動入力ボタン
+      // a. 月日 + 今日ボタン
       const aDateCell = document.createElement("td");
       const aDateInput = document.createElement("input");
       aDateInput.type = "date";
@@ -166,7 +175,7 @@
       aDateCell.appendChild(aDateBtn);
       newRow.appendChild(aDateCell);
 
-      // b. 受け取り者名 + 自動入力ボタン
+      // b. 受け取り者名
       const bNameCell = document.createElement("td");
       const bNameInput = document.createElement("input");
       bNameInput.type = "text";
@@ -182,7 +191,7 @@
       bNameCell.appendChild(bNameBtn);
       newRow.appendChild(bNameCell);
 
-      // b. 日付 + 自動入力ボタン
+      // b. 月日
       const bDateCell = document.createElement("td");
       const bDateInput = document.createElement("input");
       bDateInput.type = "date";
@@ -198,7 +207,7 @@
       bDateCell.appendChild(bDateBtn);
       newRow.appendChild(bDateCell);
 
-      // c. 返却者名 + 自動入力ボタン
+      // c. 返却者名
       const cNameCell = document.createElement("td");
       const cNameInput = document.createElement("input");
       cNameInput.type = "text";
@@ -214,7 +223,7 @@
       cNameCell.appendChild(cNameBtn);
       newRow.appendChild(cNameCell);
 
-      // c. 日付 + 自動入力ボタン
+      // c. 月日
       const cDateCell = document.createElement("td");
       const cDateInput = document.createElement("input");
       cDateInput.type = "date";
@@ -230,7 +239,7 @@
       cDateCell.appendChild(cDateBtn);
       newRow.appendChild(cDateCell);
 
-      // d. 受け取り者名 + 自動入力ボタン
+      // d. 受け取り者名
       const dNameCell = document.createElement("td");
       const dNameInput = document.createElement("input");
       dNameInput.type = "text";
@@ -246,7 +255,7 @@
       dNameCell.appendChild(dNameBtn);
       newRow.appendChild(dNameCell);
 
-      // d. 日付 + 自動入力ボタン
+      // d. 月日
       const dDateCell = document.createElement("td");
       const dDateInput = document.createElement("input");
       dDateInput.type = "date";
@@ -262,7 +271,7 @@
       dDateCell.appendChild(dDateBtn);
       newRow.appendChild(dDateCell);
 
-      // 各入力項目に変更があればイベント発火→自動で行ステータスを保存
+      // 入力変更イベント
       const inputs = [futakuInput, aNameInput, aDateInput, bNameInput, bDateInput,
                       cNameInput, cDateInput, dNameInput, dDateInput];
       inputs.forEach(input => {
@@ -270,15 +279,14 @@
       });
 
       tbody.appendChild(newRow);
-
       return newRow;
     }
 
     // -----------------------------
-    // 行の状態をチェックし、完了状態なら非表示にするなどを行う
+    // 行の状態をチェックして保存＋表示非表示
     // -----------------------------
     function checkAndSaveRow(row) {
-      // 全ての input が埋まっていれば完了とみなす簡易実装
+      // 全ての input が埋まっていれば完了とみなす
       const inputs = row.querySelectorAll("input[type='text'], input[type='date']");
       let isComplete = true;
       inputs.forEach(i => {
@@ -287,26 +295,20 @@
         }
       });
 
-      // data-rowid をキーにして localStorage に保存する
       const rowId = row.dataset.rowid;
-      if (!rowId) return; // 新規追加直後の場合など、まだ rowId 未設定ならスキップ
+      if (!rowId) return; // まだ行ID設定前の場合スキップ
 
       const savedData = JSON.parse(localStorage.getItem("flowData") || "{}");
-      // input の値を保存
-      savedData[rowId] = {
-        values: {},
-        completed: isComplete
-      };
+      savedData[rowId] = { values: {}, completed: isComplete };
 
       inputs.forEach(i => {
         savedData[rowId].values[i.name] = i.value;
       });
+
       localStorage.setItem("flowData", JSON.stringify(savedData));
 
-      // 完了ならクラスを付与、そうでないならクラスを外す
       if (isComplete) {
         row.classList.add("completed");
-        // 「完了項目を再表示」がOFFの場合、行を非表示にする
         if (!showCompletedToggle.checked) {
           row.style.display = "none";
         } else {
@@ -314,24 +316,20 @@
         }
       } else {
         row.classList.remove("completed");
-        // 未完了なら必ず表示する
         row.style.display = "";
       }
 
-      // 最下行が空でなければ、新しい行を追加
       addNewRowIfNeeded();
     }
 
-    // 最下行が空でなければ追加
+    // 最下行が空なら追加
     function addNewRowIfNeeded() {
       const rows = tbody.querySelectorAll("tr");
       if (rows.length === 0) {
-        // 行がない場合は一つ作成して終了
         const newRow = addNewRow();
         newRow.dataset.rowid = Date.now();
         return;
       }
-
       const lastRow = rows[rows.length - 1];
       const lastInputs = lastRow.querySelectorAll("input[type='text'], input[type='date']");
       let isAnyFilled = false;
@@ -340,34 +338,29 @@
           isAnyFilled = true;
         }
       });
-
       if (isAnyFilled) {
-        // もう一行追加
         const newRow = addNewRow();
-        newRow.dataset.rowid = Date.now(); // 行固有ID
+        newRow.dataset.rowid = Date.now();
       }
     }
 
     // -----------------------------
-    // localStorage からの復元
+    // データ復元
     // -----------------------------
     function loadData() {
       const savedData = JSON.parse(localStorage.getItem("flowData") || "{}");
       Object.keys(savedData).forEach(rowId => {
-        const rowInfo = savedData[rowId];
+        const info = savedData[rowId];
         const newRow = addNewRow();
         newRow.dataset.rowid = rowId;
-        // 保存された値を反映
         const inputs = newRow.querySelectorAll("input[type='text'], input[type='date']");
         inputs.forEach(i => {
-          if (rowInfo.values[i.name]) {
-            i.value = rowInfo.values[i.name];
+          if (info.values[i.name]) {
+            i.value = info.values[i.name];
           }
         });
-        // 完了ステータスに応じてクラス付与＆表示/非表示
-        if (rowInfo.completed) {
+        if (info.completed) {
           newRow.classList.add("completed");
-          // 「完了項目を再表示」がOFFなら非表示
           if (!showCompletedToggle.checked) {
             newRow.style.display = "none";
           }
@@ -383,7 +376,6 @@
 
     function sortTable(colName) {
       const rowsArray = Array.from(tbody.querySelectorAll("tr"));
-
       rowsArray.sort((rowA, rowB) => {
         const aValue = getCellValue(rowA, colName);
         const bValue = getCellValue(rowB, colName);
@@ -391,15 +383,15 @@
         if (aValue > bValue) return 1 * currentSortDir;
         return 0;
       });
-
       rowsArray.forEach(row => tbody.appendChild(row));
     }
 
     function getCellValue(row, colName) {
-      const index = {
-        "futakuNo": 0, "a_name": 1, "a_date": 2, "b_name": 3, "b_date": 4,
-        "c_name": 5, "c_date": 6, "d_name": 7, "d_date": 8
-      }[colName];
+      const indexMap = {
+        futakuNo: 0, a_name: 1, a_date: 2, b_name: 3, b_date: 4,
+        c_name: 5, c_date: 6, d_name: 7, d_date: 8
+      };
+      const index = indexMap[colName];
       if (index == null) return "";
       const cell = row.cells[index];
       const input = cell.querySelector("input");
@@ -411,23 +403,22 @@
       th.addEventListener("click", () => {
         const colName = th.dataset.col;
         if (colName === currentSortCol) {
-          currentSortDir *= -1; // 同じ列を再クリックで昇順/降順を反転
+          currentSortDir *= -1;
         } else {
           currentSortCol = colName;
-          currentSortDir = 1;  // 別の列をクリックしたら昇順へ
+          currentSortDir = 1;
         }
         sortTable(colName);
       });
     });
 
     // -----------------------------
-    // チェックボックスのイベント
+    // チェックボックスイベント
     // -----------------------------
     showCompletedToggle.addEventListener("change", () => {
       const rows = tbody.querySelectorAll("tr");
       rows.forEach(row => {
         if (row.classList.contains("completed")) {
-          // 「完了項目を再表示」ONの場合は表示、OFFなら非表示
           row.style.display = showCompletedToggle.checked ? "" : "none";
         }
       });
