@@ -14,6 +14,14 @@
     #operator-section {
       margin-bottom: 16px;
     }
+
+    /* テーブルをスクロールするためのラッパ */
+    .table-wrapper {
+      max-height: 400px; /* 必要に応じて高さを調整 */
+      overflow: auto;
+      border: 1px solid #ccc;
+    }
+
     table {
       width: 100%;
       border-collapse: collapse;
@@ -22,20 +30,32 @@
       border: 1px solid #ccc;
       padding: 8px;
       text-align: center;
+      min-width: 100px; /* 列の最小幅を設定（必要に応じて調整） */
     }
-    th {
-      cursor: pointer; /* ソート用にカーソルを変更 */
+
+    /* テーブルヘッダを画面上部に固定 */
+    thead th {
+      position: sticky;
+      top: 0;
       background: #f0f0f0;
+      z-index: 2; /* 先頭列との重なり制御 */
     }
-    /* .completed は「完了行」の背景色やスタイルだけ付与する */
+
+    /* 最初の列（付託番号列）を左に固定 */
+    th:first-child,
+    td:first-child {
+      position: sticky;
+      left: 0;
+      background-color: #f0f0f0; 
+      z-index: 3; /* ヘッダより大きい値にすることで重なりを正しく表示 */
+    }
+
+    /* completed は完了行の色付けのみ */
     .completed {
       background-color: #e0ffe0;
-      /* display: none; は削除！ JS 側で制御する */
     }
-    .hidden {
-      display: none;
-    }
-    .fill-operator-btn, .fill-date-btn {
+    .fill-operator-btn,
+    .fill-date-btn {
       margin: 2px;
       cursor: pointer;
       font-size: 12px;
@@ -55,37 +75,38 @@
     </label>
   </div>
 
-  <!-- 授受簿テーブル -->
-  <table id="recordTable">
-    <thead>
-      <tr>
-        <th data-col="futakuNo">付託番号</th>
-        <!-- a. グループ -->
-        <th data-col="a_name">a. 記載者名</th>
-        <th data-col="a_date">a. 月日</th>
-        <!-- b. グループ -->
-        <th data-col="b_name">b. 受け取り者名</th>
-        <th data-col="b_date">b. 月日</th>
-        <!-- c. グループ -->
-        <th data-col="c_name">c. 返却者名</th>
-        <th data-col="c_date">c. 月日</th>
-        <!-- d. グループ -->
-        <th data-col="d_name">d. 受け取り者名</th>
-        <th data-col="d_date">d. 月日</th>
-      </tr>
-    </thead>
-    <tbody>
-      <!-- ここに自動的に行を追加していく -->
-    </tbody>
-  </table>
+  <!-- テーブルをスクロールさせるためにラッパを追加 -->
+  <div class="table-wrapper">
+    <table id="recordTable">
+      <thead>
+        <tr>
+          <th data-col="futakuNo">付託番号</th>
+          <!-- a. グループ -->
+          <th data-col="a_name">a. 記載者名</th>
+          <th data-col="a_date">a. 月日</th>
+          <!-- b. グループ -->
+          <th data-col="b_name">b. 受け取り者名</th>
+          <th data-col="b_date">b. 月日</th>
+          <!-- c. グループ -->
+          <th data-col="c_name">c. 返却者名</th>
+          <th data-col="c_date">c. 月日</th>
+          <!-- d. グループ -->
+          <th data-col="d_name">d. 受け取り者名</th>
+          <th data-col="d_date">d. 月日</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- ここに自動的に行を追加していく -->
+      </tbody>
+    </table>
+  </div>
 
   <script>
     // -----------------------------
     // ユーティリティ
     // -----------------------------
-    // 当日の日付（YYYY-MM-DD など）を取得する簡易関数
+    // 当日の日付を取得する関数（YYYY-MM-DD形式）
     function getToday() {
-      // フォーマットは自由に変更してください
       const now = new Date();
       const y = now.getFullYear();
       const m = String(now.getMonth() + 1).padStart(2, '0');
